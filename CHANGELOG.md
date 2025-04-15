@@ -2,7 +2,7 @@
 
 This changelog documents the key issues encountered and solutions implemented
 
-## Authentication Framework Refinement (ed48111 - junedgit - <aj215210@gmail.com>)
+## Authentication Framework Refinement (ed48111 - junedgit<aj215210@gmail.com>)
 
 ### Problem: Fragmented Authentication Experience
 
