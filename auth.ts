@@ -1,32 +1,46 @@
 import NextAuth from "next-auth";
 import Google from "next-auth/providers/google";
+import type { NextAuthConfig } from "next-auth";
 
-// Create auth options without adapter for client components and middleware
-export const authConfig = {
+// Define the auth configuration following Next-Auth beta docs
+const config = {
   providers: [
     Google({
       clientId: process.env.AUTH_GOOGLE_ID,
       clientSecret: process.env.AUTH_GOOGLE_SECRET,
     }),
   ],
-  session: {
-    strategy: "jwt",
+  callbacks: {
+    authorized({ auth, request: { nextUrl } }) {
+      const isLoggedIn = !!auth?.user;
+      const isProtectedRoute = 
+        nextUrl.pathname.startsWith("/protected") || 
+        nextUrl.pathname.startsWith("/dashboard") || 
+        nextUrl.pathname.startsWith("/profile");
+      
+      if (isProtectedRoute && !isLoggedIn) {
+        return false;
+      }
+      
+      return true;
+    },
+    jwt: async ({ token, user }) => {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+    session: async ({ session, token }) => {
+      if (token && session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
   },
   pages: {
     signIn: "/auth/signin",
   },
-  callbacks: {
-    authorized({ auth, request: { nextUrl } }) {
-      const isLoggedIn = !!auth?.user;
-      const isProtected = nextUrl.pathname.startsWith("/protected");
-      if (isProtected) {
-        if (isLoggedIn) return true;
-        return false; // Redirect to login page
-      }
-      return true;
-    },
-  },
-};
+} satisfies NextAuthConfig;
 
-// Create a basic auth handler that works in all environments
-export const { auth } = NextAuth(authConfig);
+// Create the auth handlers with the configuration
+export const { handlers, auth, signIn, signOut } = NextAuth(config);
